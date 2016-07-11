@@ -21,7 +21,7 @@ namespace KerbalWeatherSystems
         }
         public static float GetDistanceBetweenCells(int database, Cell a, Cell b, float altitude)
         {
-            return (float)(Math.Sqrt(Vector3d.Dot(a.Position, b.Position)) * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
+            return (float)((a.Position - b.Position).magnitude * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
         }
         // useless, however more efficiently done with: return new Vector3((float)cell.Position.x, (float)cell.Position.y, (float)cell.Position.z);
         /*public static Vector3 GetTheFuckingUpVector(int database, Cell cell)

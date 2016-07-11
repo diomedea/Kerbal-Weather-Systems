@@ -50,7 +50,7 @@ namespace Simulation
                 // print: Total cells, other general data about the collection
                 file.WriteLine("Number of cells: " + Cell.CountAtLevel(PD.gridLevel));
                 file.WriteLine();
-                    
+                /*    
                 foreach(string s in values)  // each valid s prints a section
                 {
                     file.WriteLine(s);
@@ -108,6 +108,38 @@ namespace Simulation
                     file.WriteLine(); // closing section
 
                     // avgValue = cellMap.Average(cell => cell.Value.cloud.GetType().GetProperty(s).GetValue(cell.Value, null));
+                }
+                */
+                //TODO: delete section after testing
+                file.WriteLine("cell "+ " .Lat.. .Long.." + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. ");
+                Vector3d North = new Vector3d();
+                North.x = 1.0; North.y = 0.0; North.z = 0.0;
+                foreach (Cell cell in Cell.AtLevel(PD.gridLevel))
+                {
+                    file.Write("{0,5}", cell.Index);
+                    file.Write(" ");
+                    //file.Write(cell.Position);
+                    file.Write(String.Format("{0:+00.00;-00.00}", WeatherFunctions.GetCellLatitude(cell)));
+                    file.Write(" ");
+                    file.Write(String.Format("{0:+000.00;-000.00}", WeatherFunctions.GetCellLongitude(cell)));
+                    file.Write(" ");
+                    foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
+                    {
+                        file.Write("{0,5}", neighbor.Index);
+                        file.Write(" ");
+                        file.Write(String.Format("{0:+00.00;-00.00}", WeatherFunctions.GetCellLatitude(neighbor)));
+                        file.Write(" ");
+                        file.Write(String.Format("{0:+000.00;-000.00}", WeatherFunctions.GetCellLongitude(neighbor)));
+                        file.Write(" ");
+                        file.Write(String.Format("{0:00000}", WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, 0)));
+                        file.Write("{0,5:N1}", KSPUtil.BearingDegrees(North, (neighbor.Position-cell.Position), cell.Position));
+                        float DeltaLon = WeatherFunctions.GetCellLongitude(neighbor) - WeatherFunctions.GetCellLongitude(cell);
+                        file.Write("{0,5:N0}", Mathf.Rad2Deg*Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon) * Math.Cos(WeatherFunctions.GetCellLatitude(cell)*Mathf.Deg2Rad),
+                        (WeatherFunctions.GetCellLatitude(neighbor) - WeatherFunctions.GetCellLatitude(cell))));
+                        file.Write("  ");
+                    }
+                    
+                    file.WriteLine();
                 }
             }
         }

@@ -45,6 +45,7 @@ namespace Simulation
             //Logger("Updating cell...");
 
             float latitude = WeatherFunctions.GetCellLatitude(cell);
+            byte sideCount = (byte)(cell.IsPentagon ? 5 : 6);
             //float Q = 0f;
             float SWT = 0f;
 
@@ -147,8 +148,8 @@ namespace Simulation
             float[][] DP = new float[layerCount][];
             float[] Ws_V_ana = new float[layerCount];
             float[] dynPressure = new float[layerCount];  // dynamic Pressure coming from relative movement of airmasses (Bernoulli's_principle)
-            uint[] neighbors = new uint[6]; //a debug value only so we can see the neighbors in teh debugger
-            double[] direction = new double[6];
+            uint[] neighbors = new uint[sideCount]; //a debug value only so we can see the neighbors in teh debugger
+            double[] direction = new double[sideCount];
             float[] WetPC = new float[layerCount];
             float[] wsN = new float[layerCount]; //northsouth component of wind
             float[] wsE = new float[layerCount]; //eastwest component of wind
@@ -178,6 +179,7 @@ namespace Simulation
                 }
             }
             */
+            
 
             {
                 int neighborIndex = 0;
@@ -185,13 +187,9 @@ namespace Simulation
                 {
                     neighbors[neighborIndex] = neighbor.Index;
                     float DeltaLon = WeatherFunctions.GetCellLongitude(neighbor) - WeatherFunctions.GetCellLongitude(cell);
-                    direction[neighborIndex] = Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon), 
-                        (WeatherFunctions.GetCellLatitude(neighbor) - latitude));
+                    direction[neighborIndex] = Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon) 
+                        * Math.Cos(latitude * Mathf.Deg2Rad), (WeatherFunctions.GetCellLatitude(neighbor) - latitude));
 
-                    /* NOTE: following equation has to be tested, if faster and accurate could replace the equation above. Don't delete until tested
-                    Vector3 Cross = Vector3.Cross(neighbor.Position, cell.Position);
-                    double direction[neighborIndex] = Math.Atan2(Math.Sqrt(Cross.x * Cross.x + Cross.z * Cross.z)*((Cross.z < 0 && Cross.x > 0)?-1.0:1.0), Cross.y);
-                    */
                     neighborIndex++;
                 }
 
