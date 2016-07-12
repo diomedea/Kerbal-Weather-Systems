@@ -168,28 +168,14 @@ namespace Simulation
             double DeltaTime = WeatherFunctions.GetDeltaTime(PD.index);  
             double DeltaAltitude = WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell);
             double[] DeltaDistance_Avg = new double[layerCount];
-
-            /*
-            Vector3d[] Vertex = new Vector3d[6];
-            {
-                int Index = 0;
-                foreach (Vector3d Vertices in cell.GetVertices(PD.gridLevel))
-                {
-                    Vertex[Index] = Vertices;
-                }
-            }
-            */
-            
+         
 
             {
                 int neighborIndex = 0;
                 foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
                 {
                     neighbors[neighborIndex] = neighbor.Index;
-                    float DeltaLon = WeatherFunctions.GetCellLongitude(neighbor) - WeatherFunctions.GetCellLongitude(cell);
-                    direction[neighborIndex] = Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon) 
-                        * Math.Cos(latitude * Mathf.Deg2Rad), (WeatherFunctions.GetCellLatitude(neighbor) - latitude));
-
+                    direction[neighborIndex] = WeatherFunctions.GetDirectionBetweenCells(PD.index, cell, neighbor);
                     neighborIndex++;
                 }
 
@@ -1791,6 +1777,7 @@ namespace Simulation
                     file.WriteLine("Body: " + PD.body.bodyName + STS + "Update Cycle: " + cycle + STS + "DeltaTime: " + DeltaTime + STS + "AvgProcessTime (μs): " + WeatherSimulator.AvgCycleTime);
                     file.WriteLine("CellIndex: " + cell.Index + STS + "Latitude: " + latitude + STS + "Longitude: " + WeatherFunctions.GetCellLongitude(cell));
                     file.WriteLine("CellPosition: x: " + cell.Position.x + STS + "y: " + cell.Position.y + STS + "z: " + cell.Position.z);  // NOTE: this serves to debug Longitude and Latitude
+                    file.WriteLine("CellCentroid: x: " + cell.Centroid(PD.gridLevel).x + STS + "y: " + cell.Centroid(PD.gridLevel).y + STS + "z: " + cell.Centroid(PD.gridLevel).z);  // NOTE: this serves to debug the gridcell geometry
                     file.WriteLine("Biome: " + WeatherFunctions.GetBiome(PD.index, cell) + STS + "FLC: " + PD.biomeDatas[WeatherFunctions.GetBiome(PD.index, cell)].FLC);
                     file.WriteLine("LayerCount: " + layerCount + STS + "DeltaLayerAlt: " + DeltaAltitude +
                     STS + "TropoHeight: " + DeltaAltitude * layerCount);
@@ -1979,5 +1966,6 @@ namespace Simulation
                 KWSerror = false;  // have a breakpoint here, then manually step out (F10 or F11)
             }
         }
+
     }
 }

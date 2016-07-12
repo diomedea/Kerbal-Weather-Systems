@@ -23,6 +23,28 @@ namespace KerbalWeatherSystems
         {
             return (float)((a.Position - b.Position).magnitude * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
         }
+        public static float GetDirectionBetweenCells(int database, Cell a, Cell b)  // Direction from cell a to cell b
+        {
+            float DeltaLon = GetCellLongitude(b) - GetCellLongitude(a);
+            return (float)(Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon)
+                * Math.Cos(GetCellLatitude(a) * Mathf.Deg2Rad), (WeatherFunctions.GetCellLatitude(b) - GetCellLatitude(a))));
+        }
+        public static float GetCentroidDistance(int database, Cell a, Cell b, float altitude)
+        {
+            int Level = WeatherDatabase.PlanetaryData[database].gridLevel;
+            return (float)((a.Centroid(Level) - b.Centroid(Level)).magnitude 
+                * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
+        }
+        public static float GetCentroidDirection(int database, Cell a, Cell b)  // Direction from cell a to cell b
+        {
+            int Level = WeatherDatabase.PlanetaryData[database].gridLevel;
+            double Lat_a = Math.Asin(a.Centroid(Level).y);
+            double Lat_b = Math.Asin(b.Centroid(Level).y);
+            double Long_a = Math.Atan2(a.Centroid(Level).z, a.Centroid(Level).x);
+            double Long_b = Math.Atan2(b.Centroid(Level).z, b.Centroid(Level).x);
+            double DeltaLon = Long_b - Long_a;
+            return (float)(Math.Atan2(DeltaLon * Math.Cos(Lat_a), (Lat_b - Lat_a)));
+        }
         // useless, however more efficiently done with: return new Vector3((float)cell.Position.x, (float)cell.Position.y, (float)cell.Position.z);
         /*public static Vector3 GetTheFuckingUpVector(int database, Cell cell)
         {

@@ -112,8 +112,9 @@ namespace Simulation
                 */
                 //TODO: delete section after testing
                 file.WriteLine("cell "+ " .Lat.. .Long.." + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. ");
-                Vector3d North = new Vector3d();
-                North.x = 1.0; North.y = 0.0; North.z = 0.0;
+                Vector3d North = new Vector3d(0.0, 1.0, 0.0);
+                Vector3d Up = new Vector3d(0.0, 1.0, 0.0);
+
                 foreach (Cell cell in Cell.AtLevel(PD.gridLevel))
                 {
                     file.Write("{0,5}", cell.Index);
@@ -132,7 +133,7 @@ namespace Simulation
                         file.Write(String.Format("{0:+000.00;-000.00}", WeatherFunctions.GetCellLongitude(neighbor)));
                         file.Write(" ");
                         file.Write(String.Format("{0:00000}", WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, 0)));
-                        file.Write("{0,5:N1}", KSPUtil.BearingDegrees(North, (neighbor.Position-cell.Position), cell.Position));
+                        file.Write("{0,5:N1}", KSPUtil.BearingDegrees((neighbor.Position-cell.Position), North, cell.Position));
                         float DeltaLon = WeatherFunctions.GetCellLongitude(neighbor) - WeatherFunctions.GetCellLongitude(cell);
                         file.Write("{0,5:N0}", Mathf.Rad2Deg*Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon) * Math.Cos(WeatherFunctions.GetCellLatitude(cell)*Mathf.Deg2Rad),
                         (WeatherFunctions.GetCellLatitude(neighbor) - WeatherFunctions.GetCellLatitude(cell))));
