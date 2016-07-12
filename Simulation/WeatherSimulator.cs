@@ -300,6 +300,7 @@ namespace Simulation
             foreach(Cell cell in Cell.AtLevel(PD.gridLevel))
             {
                 SoilCell wCell = tempMap[cell];
+                wCell.centroid = cell.Centroid(PD.gridLevel);
                 wCell.temperature = GetInitTemperature(PD, 0, cell);
                 
                 tempMap[cell] = wCell;

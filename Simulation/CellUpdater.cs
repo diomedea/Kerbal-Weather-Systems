@@ -175,7 +175,8 @@ namespace Simulation
                 foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
                 {
                     neighbors[neighborIndex] = neighbor.Index;
-                    direction[neighborIndex] = WeatherFunctions.GetDirectionBetweenCells(PD.index, cell, neighbor);
+                    // direction[neighborIndex] = WeatherFunctions.GetDirectionBetweenCells(PD.index, cell, neighbor);
+                    direction[neighborIndex] = WeatherFunctions.GetCentroidDirection(PD.LiveSoilMap[cell], PD.LiveSoilMap[neighbor]);
                     neighborIndex++;
                 }
 
@@ -923,7 +924,8 @@ namespace Simulation
                 foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
                 {
                     WeatherCell wCellNeighbor = PD.LiveMap[layer][neighbor];
-                    double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
+                    // double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
+                    double DeltaDistance = WeatherFunctions.GetCentroidDistance(PD.index, PD.LiveSoilMap[cell], PD.LiveSoilMap[neighbor], WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
                     DeltaDistance_Avg[layer] += DeltaDistance;
                     double CosDir = Math.Cos(direction[n]);
                     double SinDir = Math.Sin(direction[n]);
@@ -1201,11 +1203,13 @@ namespace Simulation
                 foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
                 {
                     WeatherCell neighborWCell = PD.LiveMap[layer][neighbor];
-                    double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
+                    // double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
+                    double DeltaDistance = WeatherFunctions.GetCentroidDistance(PD.index, PD.LiveSoilMap[cell], PD.LiveSoilMap[neighbor], WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
                     float H_adv = 0;
                     float T_adv = 0;
                     //we need to find the negative dot product of the two vectors: cellVectors, neighborWindVector
-                    Vector3 cellVector = cell.Position - neighbor.Position;
+                    // Vector3 cellVector = cell.Position - neighbor.Position;
+                    Vector3 cellVector = PD.LiveSoilMap[cell].centroid - PD.LiveSoilMap[neighbor].centroid;
                     float Ws_wC = -Vector3.Dot(neighborWCell.windVector, cellVector); //the amount fo wind coming to us
 
                     //calc D_wet_Diff

@@ -11,6 +11,7 @@ namespace Database
     {
         [ProtoMember(1)]
         public float temperature { get; internal set; }
+        public Vector3d centroid { get; internal set; } //TODO: must add centroid Vector to saved KWS data
         public byte GetCCN()
         {
             return 1;
