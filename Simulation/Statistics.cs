@@ -111,7 +111,7 @@ namespace Simulation
                 }
                 */
                 //TODO: delete section after testing
-                file.WriteLine("cell "+ " .Lat.. .Long.." + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. ");
+                file.WriteLine("cell "+ " .Lat.. .Long.."+ " L" + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. ");
                 Vector3d North = new Vector3d(0.0, 1.0, 0.0);
                 Vector3d Up = new Vector3d(0.0, 1.0, 0.0);
 
@@ -123,6 +123,8 @@ namespace Simulation
                     file.Write(String.Format("{0:+00.00;-00.00}", WeatherFunctions.GetCellLatitude(cell)));
                     file.Write(" ");
                     file.Write(String.Format("{0:+000.00;-000.00}", WeatherFunctions.GetCellLongitude(cell)));
+                    file.Write(" ");
+                    file.Write(cell.Level);
                     file.Write(" ");
                     foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
                     {

@@ -106,8 +106,10 @@ namespace Overlay
             resources.Add(WCResc);
             var GeoResc = new ResourceDefinition();
             GeoResc.Resource = "Geodesy";
-            GeoResc.MinQuantity = 0.9999999;
-            GeoResc.MaxQuantity = 1.0000001;
+            //GeoResc.MinQuantity = 0.9999999;
+            //GeoResc.MaxQuantity = 1.0000001;
+            GeoResc.MinQuantity = 0.0;
+            GeoResc.MaxQuantity = 0.003;
             resources.Add(GeoResc);
             var DDDResc = new ResourceDefinition();
             DDDResc.Resource = "DeltaDistanceDiff";
@@ -365,8 +367,8 @@ namespace Overlay
                     deposit2 = WeatherFunctions.GetSunriseFactor(PD.index, cell);
                     break;
                 case "Geodesy":
-                    // deposit = cell.Position.magnitude;
-                    deposit = Math.Sqrt(cell.Position.x * cell.Position.x + cell.Position.y * cell.Position.y + cell.Position.z * cell.Position.z);
+                    // deposit = Math.Sqrt(cell.Position.x * cell.Position.x + cell.Position.y * cell.Position.y + cell.Position.z * cell.Position.z);
+                    deposit = (cell.Position - PD.LiveSoilMap[cell].centroid).magnitude;
                     break;
                 case "DeltaDistanceDiff":
                     double DDD = 0.0;
@@ -502,6 +504,7 @@ namespace Overlay
                     byte b = g;
                     color = new Color32(r, g, b, alpha);
                     return color;
+                    
                 }
                 if (definition.Resource.Equals("DeltaDistanceDiff"))
                 {
@@ -568,6 +571,7 @@ namespace Overlay
             DDD /= n;
             DDD2 /= n;
             GUILayout.Label(String.Format("ΔDistanceδ:  {0:0.000000}", Math.Sqrt(Math.Abs(DDD2 - DDD * DDD)) / DDD));
+            GUILayout.Label(String.Format("CentroidΔ: {0:0.000000}", (cell.Position - PD.LiveSoilMap[cell].centroid).magnitude));
             GUILayout.Label(String.Format("flowPChange: {0:+00.000;-00.000}", PD.LiveMap[currentLayer][cell].flowPChange));
             GUILayout.EndVertical();
 
