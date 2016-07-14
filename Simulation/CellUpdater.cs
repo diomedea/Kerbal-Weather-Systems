@@ -1962,6 +1962,23 @@ namespace Simulation
             PlanetData PD = WeatherDatabase.PlanetaryData[database];
             return PD.body.gravParameter / ((PD.body.Radius + altitude) * (PD.body.Radius + altitude));
         }
+        /*
+        internal static QuaternionD Quaternion_mult(QuaternionD s, QuaternionD r)
+        {
+            QuaternionD m = new QuaternionD(
+                r.w * s.w - r.x * s.x - r.y * s.y - r.z * s.z, 
+                r.w * s.x + r.x * s.w - r.y * s.z + r.z * s.y,
+                r.w * s.y + r.x * s.z + r.y * s.w - r.z * s.x, 
+                r.w * s.z - r.x * s.y + r.y * s.x + r.z * s.w);
+            return m;
+        }
+        internal static QuaternionD Quaternion_rot(Vector3d v, QuaternionD q)
+        {
+            QuaternionD t = new QuaternionD(0.0, v.x, v.y, v.z);
+            QuaternionD p = new QuaternionD(q.w, -q.x, -q.y, -q.z);
+            return Quaternion_mult(Quaternion_mult(q, t), p);
+        }
+        */
         internal static void Logger(string s)
         {
             WeatherLogger.Log("[CU]" + s);

@@ -111,7 +111,9 @@ namespace Simulation
                 }
                 */
                 //TODO: delete section after testing
-                file.WriteLine("cell "+ " .Lat.. .Long.."+ " L" + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. " + " neigh .Lat.. .Long.. Dist. Brg. Dir. ");
+                file.WriteLine("cell "+ " .Lat.. .Long.." + " L" + " neigh .Lat.. .Long.. Dist. Dir(°) " + " neigh .Lat.. .Long.. Dist. Dir(°) " 
+                                                                 + " neigh .Lat.. .Long.. Dist. Dir(°) " + " neigh .Lat.. .Long.. Dist. Dir(°) " 
+                                                                 + " neigh .Lat.. .Long.. Dist. Dir(°) " + " neigh .Lat.. .Long.. Dist. Dir(°) ");
                 Vector3d North = new Vector3d(0.0, 1.0, 0.0);
                 Vector3d Up = new Vector3d(0.0, 1.0, 0.0);
 
@@ -135,10 +137,11 @@ namespace Simulation
                         file.Write(String.Format("{0:+000.00;-000.00}", WeatherFunctions.GetCellLongitude(neighbor)));
                         file.Write(" ");
                         file.Write(String.Format("{0:00000}", WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, 0)));
-                        file.Write("{0,5:N1}", KSPUtil.BearingDegrees((neighbor.Position-cell.Position), North, cell.Position));
-                        float DeltaLon = WeatherFunctions.GetCellLongitude(neighbor) - WeatherFunctions.GetCellLongitude(cell);
-                        file.Write("{0,5:N0}", Mathf.Rad2Deg*Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon) * Math.Cos(WeatherFunctions.GetCellLatitude(cell)*Mathf.Deg2Rad),
-                        (WeatherFunctions.GetCellLatitude(neighbor) - WeatherFunctions.GetCellLatitude(cell))));
+                        // file.Write("{0,5:N1}", WeatherFunctions.GetCentroidDirection(PD.LiveSoilMap[cell], PD.LiveSoilMap[neighbor]) * Mathf.Rad2Deg);
+                        float Dir = WeatherFunctions.GetCentroidDirection(PD.LiveSoilMap[cell], PD.LiveSoilMap[neighbor]);
+                        file.Write("{0,7:N2}", Dir * Mathf.Rad2Deg + (Dir < 0 ? 360 : 0));
+                        // float DeltaLon = WeatherFunctions.GetCellLongitude(neighbor) - WeatherFunctions.GetCellLongitude(cell);
+                        // file.Write("{0,5:N0}", Mathf.Rad2Deg*Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon) * Math.Cos(WeatherFunctions.GetCellLatitude(cell)*Mathf.Deg2Rad),(WeatherFunctions.GetCellLatitude(neighbor) - WeatherFunctions.GetCellLatitude(cell))));
                         file.Write("  ");
                     }
                     

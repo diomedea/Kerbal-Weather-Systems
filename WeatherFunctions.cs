@@ -33,6 +33,7 @@ namespace KerbalWeatherSystems
         {
             return (float)((a.centroid - b.centroid).magnitude * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
         }
+        /*
         public static float GetCentroidDirection(SoilCell a, SoilCell b)  // Direction from cell a to cell b
         {
             double Lat_a = Math.Asin(a.centroid.y);
@@ -41,6 +42,26 @@ namespace KerbalWeatherSystems
             double Long_b = Math.Atan2(b.centroid.z, b.centroid.x);
             return (float)(Math.Atan2((Long_b - Long_a) * Math.Cos(Lat_a), (Lat_b - Lat_a)));
         }
+        */
+        public static float GetCentroidDirection(SoilCell a, SoilCell b)  // Direction from cell a to cell b, using analytic geometry
+        {
+            if (a.centroid == b.centroid) { return 0; }  // a and b are coincident (VL.magnitude = 0)
+            if (a.centroid == Vector3d.up) { return (float)Math.PI; }  // a and NorthPole are coincident (VG.magnitude = VL.magnitude = 0)
+            if (a.centroid == Vector3d.down) { return 0; }  // a and SouthPole are coincident (VG.magnitude = VL.magnitude = 0)
+            if (b.centroid == Vector3d.up) { return 0; } // b and NorthPole are coincident (no need to compute)
+            if (b.centroid == Vector3d.down) { return (float)Math.PI; } // b and SouthPole are coincident (no need to compute)
+            Vector3d VG = new Vector3d(a.centroid.z, 0, -a.centroid.x); // is the vector normal to the plane by Origin ≡ (0,0,0), NorthPole ≡ (0,1,0) and cell a
+            Vector3d VL = new Vector3d( // is the vector normal to the plane by Origin ≡ (0,0,0), cell a and cell b
+                (b.centroid.y - a.centroid.y) * (- a.centroid.z) - (b.centroid.z - a.centroid.z) * (- a.centroid.y),
+                (b.centroid.z - a.centroid.z) * (- a.centroid.x) - (b.centroid.x - a.centroid.x) * (- a.centroid.z),
+                (b.centroid.x - a.centroid.x) * (- a.centroid.y) - (b.centroid.y - a.centroid.y) * (- a.centroid.x));
+            float Angle = (float)(Math.PI - Math.Acos(Mathf.Clamp((float)(Vector3d.Dot(VG, VL) / (VG.magnitude * VL.magnitude)), -1.0f,1.0f)));
+
+            Vector3d Ha = new Vector3d(a.centroid.x, 0, a.centroid.z); // projection on equatorial plane of cell a
+            Vector3d Hba = new Vector3d(b.centroid.x - a.centroid.x, 0, b.centroid.z - a.centroid.z);  // projection of vector (cell b - cell a)
+            return Vector3d.Cross(Hba, Ha).y < 0 ? -Angle : Angle; //Vector.Cross is oriented on the y axis, positive if Hba is to the East of Ha
+        }
+
         // useless, however more efficiently done with: return new Vector3((float)cell.Position.x, (float)cell.Position.y, (float)cell.Position.z);
         /*public static Vector3 GetTheFuckingUpVector(int database, Cell cell)
         {
