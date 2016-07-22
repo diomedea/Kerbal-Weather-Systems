@@ -27,7 +27,7 @@ namespace Database
         
         public float getDropletSize()
         {
-            return Math.Abs(cloud.dropletSize / 1E7f);
+            return Math.Abs(cloud.dropletSize);
         }
         public bool getIsIce()
         {

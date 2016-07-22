@@ -327,12 +327,12 @@ namespace Simulation
                     if(layer == 0)
                     {
                         wCell.pressure = (float)(PD.LiveMap[layers - 1][cell].pressure 
-                            * Math.Exp(-WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell) / (CellUpdater.UGC * PD.SH_correction / PD.atmoData.M / CellUpdater.G(PD.index, layer * WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell)) * PD.LiveMap[layers - 1][cell].temperature)));
+                            * Math.Exp(-WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell) / (CellUpdater.UGC * PD.SH_correction / PD.atmoData.M / CellUpdater.G(PD.index, (layers+layer) * WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell)) * PD.LiveMap[layers - 1][cell].temperature)));
                     }
                     else
                     {
                         wCell.pressure = (float)(tempMap[layer - 1][cell].pressure 
-                            * Math.Exp(-WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell) / (CellUpdater.UGC * PD.SH_correction / PD.atmoData.M / CellUpdater.G(PD.index, layer * WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell)) * tempMap[layer - 1][cell].temperature)));
+                            * Math.Exp(-WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell) / (CellUpdater.UGC * PD.SH_correction / PD.atmoData.M / CellUpdater.G(PD.index, (layers+layer) * WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell)) * tempMap[layer - 1][cell].temperature)));
                     }
                     
 

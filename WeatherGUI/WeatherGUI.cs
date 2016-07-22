@@ -70,8 +70,8 @@ namespace WeatherGUI
                 GUILayout.Label("CCN : " + WeatherFunctions.GetCellCCN(PD.index, currentLayer, cell) * 100 + " %");
                 GUILayout.Label("Cloud water : " + WeatherFunctions.GetCellWaterContent(PD.index, currentLayer, cell) + " Kg/m³");
                 int Iced = Math.Sign(WeatherFunctions.GetCelldropletSize(PD.index, currentLayer, cell));
-                GUILayout.Label("droplet Size: " + Math.Abs(WeatherFunctions.GetCelldropletSize(PD.index, currentLayer, cell) / 10000.0f) + " mm " + (Iced < 0 ? "Iced" : Iced > 0 ? "Liqd" : "None"));
-                GUILayout.Label("cloud thickness: " + WeatherFunctions.GetCellthickness(PD.index, currentLayer, cell) + " m");
+                GUILayout.Label("droplet Size: " + Math.Abs(WeatherFunctions.GetCelldropletSize(PD.index, currentLayer, cell) * 1000.0f) + " mm");
+                GUILayout.Label("cloud thickness: " + WeatherFunctions.GetCellthickness(PD.index, currentLayer, cell) + " m " + (Iced < 0 ? "Iced" : Iced > 0 ? "Liqd" : "None"));
                 GUILayout.Label("rain duration: " + WeatherFunctions.GetCellrainDuration(PD.index, currentLayer, cell) + " cycles");
                 GUILayout.Label("rain decay: " + WeatherFunctions.GetCellrainDecay(PD.index, currentLayer, cell)/256.0f);
             }

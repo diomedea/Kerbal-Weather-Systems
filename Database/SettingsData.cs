@@ -17,6 +17,6 @@ namespace Database
         public float SoilThCapMult;
         public float AtmoThCapMult;
         public float SoilIRGFactor;
-        public float AtmoIRGFactor;
+        public float AtmoIRGFactor;  //TODO: drop (obsolete)
     }
 }

@@ -102,7 +102,7 @@ namespace Overlay
             var WCResc = new ResourceDefinition();
             WCResc.Resource = "Cloud water";
             WCResc.MinQuantity = 0;
-            WCResc.MaxQuantity = 1E0;
+            WCResc.MaxQuantity = 1E6;
             resources.Add(WCResc);
             var GeoResc = new ResourceDefinition();
             GeoResc.Resource = "Geodesy";
@@ -376,7 +376,7 @@ namespace Overlay
                     int n = 0;
                     foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
                     {
-                        double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
+                        double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell.Position, neighbor.Position, WeatherFunctions.GetCellAltitude(PD.index, layer, cell));
                         DDD += DeltaDistance;
                         DDD2 += DeltaDistance * DeltaDistance;
                         n++;
@@ -541,6 +541,16 @@ namespace Overlay
                 Vector2 mouse = Event.current.mousePosition;
                 Rect position = new Rect(mouse.x + 16, mouse.y + 4, 175, 32);
                 GUILayout.Window(mouseGUID, position, mouseWindow, "KWS Debug Info~");
+                if (Mouse.Middle.GetDoubleClick() == true)  // allows to start debugLog with the cell at cursor
+                {
+                    WeatherSettings.SD.debugCell = hoverCell.Value.Index;
+                    WeatherSettings.SD.debugLog = true;
+                    WeatherSettings.SD.LogStartCycle = 0;
+                }
+            }
+            else if (Mouse.Middle.GetDoubleClick() == true)  // stops debugLog 
+            {
+                WeatherSettings.SD.debugLog = false;
             }
         }
 
@@ -563,7 +573,7 @@ namespace Overlay
             int n = 0;
             foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
             {
-                double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell, neighbor, WeatherFunctions.GetCellAltitude(PD.index, currentLayer, cell));
+                double DeltaDistance = WeatherFunctions.GetDistanceBetweenCells(PD.index, cell.Position, neighbor.Position, WeatherFunctions.GetCellAltitude(PD.index, currentLayer, cell));
                 DDD += DeltaDistance;
                 DDD2 += DeltaDistance * DeltaDistance;
                 n++;

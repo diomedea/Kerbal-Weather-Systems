@@ -19,16 +19,34 @@ namespace KerbalWeatherSystems
         {
             return Planetarium.GetUniversalTime();
         }
-        public static float GetDistanceBetweenCells(int database, Cell a, Cell b, float altitude)
+        public static float GetDistanceBetweenCells(int database, Vector3d a, Vector3d b, float altitude)
         {
-            return (float)((a.Position - b.Position).magnitude * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
+            return (float)((a - b).magnitude * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
         }
-        public static float GetDirectionBetweenCells(int database, Cell a, Cell b)  // Direction from cell a to cell b
+        public static float GetDirectionBetweenCells(Vector3d a, Vector3d b)  // Direction from cell a to cell b
         {
+            /*
             float DeltaLon = GetCellLongitude(b) - GetCellLongitude(a);
             return (float)(Math.Atan2((DeltaLon > 180 ? DeltaLon - 360 : DeltaLon < -180 ? DeltaLon + 360 : DeltaLon)
                 * Math.Cos(GetCellLatitude(a) * Mathf.Deg2Rad), (WeatherFunctions.GetCellLatitude(b) - GetCellLatitude(a))));
+            */
+            if (a == b) { return 0; }  // a and b are coincident (VL.magnitude = 0)
+            if (a == Vector3d.up) { return (float)Math.PI; }  // a and NorthPole are coincident (VG.magnitude = VL.magnitude = 0)
+            if (a == Vector3d.down) { return 0; }  // a and SouthPole are coincident (VG.magnitude = VL.magnitude = 0)
+            if (b == Vector3d.up) { return 0; } // b and NorthPole are coincident (no need to compute)
+            if (b == Vector3d.down) { return (float)Math.PI; } // b and SouthPole are coincident (no need to compute)
+            Vector3d VG = new Vector3d(a.z, 0, -a.x); // is the vector normal to the plane by Origin ≡ (0,0,0), NorthPole ≡ (0,1,0) and cell a
+            Vector3d VL = new Vector3d( // is the vector normal to the plane by Origin ≡ (0,0,0), cell a and cell b
+                (b.y - a.y) * (-a.z) - (b.z - a.z) * (-a.y),
+                (b.z - a.z) * (-a.x) - (b.x - a.x) * (-a.z),
+                (b.x - a.x) * (-a.y) - (b.y - a.y) * (-a.x));
+            float Angle = (float)(Math.PI - Math.Acos(Mathf.Clamp((float)(Vector3d.Dot(VG, VL) / (VG.magnitude * VL.magnitude)), -1.0f, 1.0f)));
+
+            Vector3d Ha = new Vector3d(a.x, 0, a.z); // projection on equatorial plane of cell a
+            Vector3d Hba = new Vector3d(b.x - a.x, 0, b.z - a.z);  // projection of vector (cell b - cell a)
+            return Vector3d.Cross(Hba, Ha).y < 0 ? -Angle : Angle; //Vector.Cross is oriented on the y axis, positive if Hba is to the East of Ha
         }
+        /*
         public static float GetCentroidDistance(int database, SoilCell a, SoilCell b, float altitude)
         {
             return (float)((a.centroid - b.centroid).magnitude * (WeatherDatabase.PlanetaryData[database].body.Radius + altitude));
@@ -42,7 +60,7 @@ namespace KerbalWeatherSystems
             double Long_b = Math.Atan2(b.centroid.z, b.centroid.x);
             return (float)(Math.Atan2((Long_b - Long_a) * Math.Cos(Lat_a), (Lat_b - Lat_a)));
         }
-        */
+        
         public static float GetCentroidDirection(SoilCell a, SoilCell b)  // Direction from cell a to cell b, using analytic geometry
         {
             if (a.centroid == b.centroid) { return 0; }  // a and b are coincident (VL.magnitude = 0)
@@ -243,6 +261,7 @@ namespace KerbalWeatherSystems
         {
             return (float)(Math.Pow((3d / 4d / Math.PI * volume), (1.0 / 3d)));
         }
+        /*
         internal static Int16 AverageDropletSize16(Int16 Size, byte decay, UInt16 duration)
         {
             if (decay == 0 || duration == 0) { return Math.Abs(Size); }
@@ -253,14 +272,15 @@ namespace KerbalWeatherSystems
                 return (short)(Size * (Math.Pow(rate, (duration)) / Math.Log(rate) + intK) / (duration));
             }
         }
-        internal static double AverageDropletSize(Int16 Size, byte decay, UInt16 duration)
+        */
+        internal static double AverageDropletSize(float Size, byte decay, UInt16 duration)
         {
-            if (decay == 0 || duration == 0) { return Math.Abs(Size)/1E7; }
+            if (decay == 0 || duration == 0) { return Math.Abs(Size); }
             else // Size *= rate at each duration term, the series converges to an integral as returned
             {
                 double rate = (256 - decay) / 256;
                 double intK = -1 / Math.Log(rate);  // integration constant
-                return (Size * (Math.Pow(rate, (duration)) / Math.Log(rate) + intK) / (duration)/1E7);
+                return (Size * (Math.Pow(rate, (duration)) / Math.Log(rate) + intK) / (duration));
             }
         }
         public static uint GetCellIndex(int database, double latitude, double longitude) // provides the index of a cell, known the geographic coordinates of any point in it
