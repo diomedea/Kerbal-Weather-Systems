@@ -644,7 +644,7 @@ namespace Simulation
                     Logger("EvapCorr is NaN" + " @ cell: " + cell.Index);
                 }
             }
-            double Q_evap = evap_corr * PD.dewData.he * 1000; //heat required for evap?
+            double Q_evap = evap_corr * PD.dewData.he; //heat required for evap
 
             #region N_dew, N_cond, N_sscond
             //Get Ws_evap, N_dew, N_sscond, N_Prec_p, N_Prec
@@ -1326,8 +1326,8 @@ namespace Simulation
                 }
                 else
                 {
-                    ALR[layer] = -(float)CellUpdater.G(PD.index, ((float)(layer * DeltaAltitude))) * (1 + PD.dewData.he * 1000 * N_dew[layer] / D_dry[layer] / UGC * PD.atmoData.M / wCell.temperature)
-                     / (PD.atmoData.specificHeatGas + (PD.dewData.he * 1000 * PD.dewData.he * 1000 * N_dew[layer] / D_dry[layer] / UGC * PD.dewData.M / wCell.temperature / wCell.temperature));
+                    ALR[layer] = -(float)CellUpdater.G(PD.index, ((float)(layer * DeltaAltitude))) * (1 + PD.dewData.he * N_dew[layer] / D_dry[layer] / UGC * PD.atmoData.M / wCell.temperature)
+                     / (PD.atmoData.specificHeatGas + (PD.dewData.he * PD.dewData.he * N_dew[layer] / D_dry[layer] / UGC * PD.dewData.M / wCell.temperature / wCell.temperature));
                     //Saturated (moist) Adiabatic Lapse Rate
                 }
             }
@@ -1631,6 +1631,15 @@ namespace Simulation
                 }
 
                 double newDew = K_N_DROP * (N_cond[layer] + N_sscond[layer]) * WeatherFunctions.SphereSize2Volume(0.000001f);  // newDew = amount of Dew coalescing in new droplets
+                if (newDew < N_cond[layer])   // drop the newDew used for coalescence of new droplets
+                {
+                    N_cond[layer] -= (float)newDew;
+                }
+                else
+                {
+                    N_sscond[layer] -= (float)newDew;
+                }
+
                 if (cloudLive.rainyDuration < 1) { cloud.rainyDecay = 0; }
                 else if (cloudLive.getwaterContent() > 0)
                 {  // rainyDecay is the average change of droplets volume, for droplets generated each cycle (droplets population samples)
@@ -1652,17 +1661,17 @@ namespace Simulation
                 // change of state (liquid/solid) of dew condensed/deposited
                 if (wCell.temperature - PD.dewData.T_m > FLT_Epsilon)
                 {
-                    // time to freeze/melt
-                    // float Power = (float)((wCell.temperature - PD.dewData.T_m) * atmo_ks * 4f * Math.PI * cloud.getDropletSize);
+                    // TimeMelt = time to freeze/melt = Q_melt/Power
+                    // float Power = (float)((wCell.temperature - PD.dewData.T_m) * atmo_ks * 4f * Math.PI * cloud.getDropletSize * cloud.getDropletSize);
                     // float Q_melt = (float)(PD.dewData.hm * PD.dewData.Ds * (4f / 3f * Math.PI * Math.Pow(cloud.getDropletSize, 3)));
 
-                    // NOTE: tiny droplets freeze/melt very fast; raindrops, snowflakes take much longer. 
+                    // NOTE: tiny droplets freeze/melt very fast; raindrops, snowflakes take much longer; hail takes still longer. 
                     //This routine will also come useful to determine what's actually falling to the ground
                     float N_Melt = 1.0f;
                     if (Math.Abs(cloudLive.dropletSize) > 4E-7f)
                     {
                         float TimeMelt = (float)Math.Abs(PD.dewData.hm * PD.dewData.Ds / 3.0f / (wCell.temperature - PD.dewData.T_m)
-                            / PD.atmoData.ks * Math.Pow((wCell.getDropletSize() / Math.PI), 2));
+                            / PD.atmoData.ks * wCell.getDropletSize());
                         // amount frozen/melted in cycle
                         if (float.IsNaN(TimeMelt))
                         {
@@ -1816,10 +1825,16 @@ namespace Simulation
                 wCell.cloud = cloud; //reassign cloud with updated cloud struct
                 PD.BufferMap[layer][cell] = wCell; //reassign weathercell
             }
-            N_dew[0] = N_dew[0] + Pouring/3f; // some of the rain increases humidity in the lower air
-            RH[0] = N_dew[0] * PD.BufferSoilMap[cell].temperature * UGC / PD.dewData.M / ew_eq[0];
-            // TODO: soil biome should turn a bit more humid due to rain (calc biome humidity for next cycle based on past rain)
-            // TODO: correct soil temperature for rain
+            // effects of rain
+            {
+                WeatherCell wCell = PD.BufferMap[0][cell];
+                N_dew[0] = N_dew[0] + Pouring / 3f; // some of the rain increases humidity in the lower air (most would soak terrain)
+                double Q_prec = 0;
+                RH[0] = N_dew[0] * PD.BufferSoilMap[cell].temperature * UGC / PD.dewData.M / ew_eq[0];
+                // TODO: soil biome should turn a bit more humid due to rain (calc biome humidity for next cycle based on past rain: requires each cell to have variable biome FLC so unfeasible for now)
+                // TODO: correct soil temperature for rain
+            }
+
             #endregion
             //Logger("Droplet calcs done");
             //Logger("Cell update done");

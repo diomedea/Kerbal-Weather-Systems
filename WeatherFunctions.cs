@@ -283,7 +283,7 @@ namespace KerbalWeatherSystems
                 return (Size * (Math.Pow(rate, (duration)) / Math.Log(rate) + intK) / (duration));
             }
         }
-        public static uint GetCellIndex(int database, double latitude, double longitude) // provides the index of a cell, known the geographic coordinates of any point in it
+        /*public static uint GetCellIndex(int database, double latitude, double longitude) // provides the index of a cell, known the geographic coordinates of any point in it
         {
             PlanetData PD = WeatherDatabase.PlanetaryData[database];
             double x = Math.Cos(longitude * Mathf.Deg2Rad);
@@ -302,6 +302,7 @@ namespace KerbalWeatherSystems
             }
             return index;
         }
+        */
         public static double density(int database, Vessel vessel)
         {
             PlanetData PD = WeatherDatabase.PlanetaryData[database];
