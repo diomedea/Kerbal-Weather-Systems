@@ -280,7 +280,7 @@ namespace KerbalWeatherSystems
             {
                 double rate = (256 - decay) / 256;
                 double intK = -1 / Math.Log(rate);  // integration constant
-                return (Size * (Math.Pow(rate, (duration)) / Math.Log(rate) + intK) / (duration));
+                return (Math.Abs(Size) * (Math.Pow(rate, (duration)) / Math.Log(rate) + intK) / (duration));
             }
         }
         /*public static uint GetCellIndex(int database, double latitude, double longitude) // provides the index of a cell, known the geographic coordinates of any point in it
@@ -360,6 +360,12 @@ namespace KerbalWeatherSystems
             {
                 return Mathf.Pow(10, PD.dewData.A2 - PD.dewData.B2 / (temperature + PD.dewData.C2));
             }
+        }
+        internal static float getTempEq(int database, float ew_eq)  //inverts Antoine equation to give Temperature_eq
+        {
+            PlanetData PD = WeatherDatabase.PlanetaryData[database];
+            double tryhigh = -PD.dewData.C1 - PD.dewData.B1 / (Math.Log10(ew_eq) - PD.dewData.A1);
+            return (tryhigh < 304.0 ? (float)(-PD.dewData.C2 - PD.dewData.B2 / (Math.Log10(ew_eq) - PD.dewData.A2)) : (float)tryhigh);
         }
         public static double VdW(AtmoData substance,  float pressure, float temperature, out double error)  // computes gas density according to real gas equation
         {

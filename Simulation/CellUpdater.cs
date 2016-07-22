@@ -114,6 +114,7 @@ namespace Simulation
 
             float[] Q_cond = new float[layerCount]; //Latent heat released, soil, no strato
             float Q_cond_Soil = 0f;
+            float[] Q_Prec = new float[layerCount]; // heat exchanged due to precipitations
 
             float[] N_cond = new float[layerCount]; //Water condensed, no soil, no strato
             float[] N_sscond = new float[layerCount]; //super saturated water condensed, no soil, no strato
@@ -1730,7 +1731,6 @@ namespace Simulation
             //Logger("Cloud water done");
             #region Droplet calcs, precipitations
             //calc droplet terminal speed from previous droplet size, as well as volume and new droplet size
-            float Pouring = 0f;
             for (int layer = 0; layer < layerCount; layer++)
             {
                 WeatherCell wCell = PD.BufferMap[layer][cell];
@@ -1759,7 +1759,7 @@ namespace Simulation
                 }
 
                 N_Prec[layer] = N_Prec_p[layer] * (Math.Abs(wCell.cloud.cDew) + Math.Abs(wCell.cloud.dDew));
-                Pouring += N_Prec[layer];
+
                 if (float.IsNaN(N_Prec[layer]))
                 {
                     KWSerror = true;
@@ -1825,20 +1825,109 @@ namespace Simulation
                 wCell.cloud = cloud; //reassign cloud with updated cloud struct
                 PD.BufferMap[layer][cell] = wCell; //reassign weathercell
             }
-            // effects of rain
+            
+            // effects of precipitations
+            
+            float Pouring = 0f;
+            float Q_prec = 0f;
+            Q_Prec[layerCount - 1] = 0f;
+            float T_prec_old, T_prec = 0;
+            for (int layer = layerCount - 1; layer >= 0; layer--)
             {
-                WeatherCell wCell = PD.BufferMap[0][cell];
-                N_dew[0] = N_dew[0] + Pouring / 3f; // some of the rain increases humidity in the lower air (most would soak terrain)
-                double Q_prec = 0;
-                RH[0] = N_dew[0] * PD.BufferSoilMap[cell].temperature * UGC / PD.dewData.M / ew_eq[0];
-                // TODO: soil biome should turn a bit more humid due to rain (calc biome humidity for next cycle based on past rain: requires each cell to have variable biome FLC so unfeasible for now)
-                // TODO: correct soil temperature for rain
-            }
+                WeatherCell wCell = PD.BufferMap[layer][cell];
+                Q_prec += N_Prec[layer] * wCell.temperature * PD.dewData.cl;
+                T_prec_old = wCell.temperature * N_Prec[layer] + T_prec * Pouring;  // getting an average of temperature from all precipitation
+                Pouring += N_Prec[layer];
+                if (Pouring > FLT_Epsilon)
+                {
+                    T_prec_old /= Pouring;
 
+                    // thermal effects (Q_prec)
+                    if (layer > 0)
+                    {
+                        WeatherCell wCellLow = PD.BufferMap[layer - 1][cell];
+                        T_prec = T_prec_old + (wCellLow.temperature - T_prec_old) * (1 - (float)Math.Exp(-3 * DeltaAltitude  // new temperature of dew from heat conduction with air at lower layer
+                            * PD.atmoData.ks / (PD.dewData.Dl * PD.dewData.cl * Math.Abs(wCell.cloud.dropletSize) * (DI_S[layer] - wCell.windVector.y))));
+                        Q_Prec[layer - 1] = (T_prec - T_prec_old) * Pouring * PD.dewData.cl;  // heat exchanged by dew with air while falling
+                        if ((T_prec > PD.dewData.T_m) && (T_prec_old <= PD.dewData.T_m)) { Q_Prec[layer - 1] += Pouring * PD.dewData.hm; }  // heat exchanged in case of snow/hail melting
+                        if ((T_prec > WeatherFunctions.getTempEq(PD.index, WeatherFunctions.getEwEq(PD.index, T_prec_old) * wCellLow.relativeHumidity))) // "if new temperature of dew is higher than equilibrium temperature"
+                        {
+                            float Pouring_P = Math.Max(1, (T_prec - T_prec_old) / (wCellLow.temperature - T_prec_old));  // percentage vaporizing
+                            Q_Prec[layer - 1] += Pouring * Pouring_P * PD.dewData.he; // heat exchanged in case of rain vaporizing mid-air
+                            wCellLow.N_Dew += Pouring * Pouring_P;
+                            Pouring *= (1 - Pouring_P);
+                            Q_prec *= (1 - Pouring_P);
+                        }
+                        if ((T_prec < PD.dewData.T_m) && (T_prec_old > PD.dewData.T_m)) { Q_Prec[layer - 1] -= Pouring * PD.dewData.hm; }  // heat exchanged in case of freezing rain
+                    }
+                    Q_prec += Q_Prec[layer];
+                    wCell.temperature -= Q_Prec[layer] / thermalCap[layer];
+                    if (float.IsNaN(wCell.temperature))
+                    {
+                        KWSerror = true;
+                        Logger("Temp is NaN" + " @ cell: " + cell.Index);
+                    }
+                    if (wCell.temperature <= 2.725f)
+                    {
+                        KWSerror = true;
+                        Logger("Temperature gone mad" + " @ cell: " + cell.Index);
+                    }
+                    // humidity effects
+                    wCell.relativeHumidity = wCell.N_Dew * wCell.temperature * UGC / PD.dewData.M / ew_eq[layer];
+                    PD.BufferMap[layer][cell] = wCell;  // and store updated values
+                }
+            }
+            // soil effects
+            {//soil temp
+                SoilCell wCell = PD.BufferSoilMap[cell];
+                QSoil = wCell.temperature * thermalCapSoil - Q_prec;
+                wCell.temperature = Mathf.Max(2.725f, QSoil / thermalCapSoil);
+                if (float.IsNaN(wCell.temperature))
+                {
+                    KWSerror = true;
+                    Logger("Soil Temp is NaN" + " @ cell: " + cell.Index);
+                }
+                if (wCell.temperature <= 2.725f)
+                {
+                    KWSerror = true;
+                    Logger("Soil temperature gone mad" + " @ cell: " + cell.Index);
+                }
+                PD.BufferSoilMap[cell] = wCell;
+                if (Pouring > FLT_Epsilon)  // what is falling?
+                {
+                    if (T_prec > PD.dewData.T_m + 0.5)
+                    {
+                        return; // this is rain
+                    }
+                    else if ((T_prec >= PD.dewData.T_m) && (T_prec <= PD.dewData.T_m + 0.5) && (PD.BufferMap[0][cell].temperature < PD.dewData.T_m))
+                    {
+                        return; // this is freezing rain
+                    }
+                    else if (T_prec < PD.dewData.T_m)
+                    {
+                        for (int layer = layerCount - 1; layer > 0; layer--)
+                        {
+                            if ((PD.BufferMap[layer][cell].temperature < PD.dewData.T_m) && (PD.BufferMap[layer][cell].relativeHumidity > 1.0)
+                                && (N_Prec[layer - 1] > 0) && (PD.BufferMap[layer - 1][cell].temperature > PD.dewData.T_m)
+                                && (PD.BufferMap[layer - 1][cell].windVector.y > 0))
+                            {
+                                return; // this includes hail
+                            }
+                        }
+                    }
+                    else if ((T_prec < PD.dewData.T_m) && (wCell.temperature <= PD.dewData.T_m)) {
+                        return; // this is snow
+                    }
+                    else { return;  // this is melting snow
+                    }
+                }
+            }
+            // TODO: soil biome should turn a bit more humid due to rain (calc biome humidity for next cycle based on past rain: requires each cell to have variable biome FLC so unfeasible for now)
+            
             #endregion
             //Logger("Droplet calcs done");
             //Logger("Cell update done");
-
+            
             #region debugLog
 
             bool takethisCell = false;
@@ -1876,7 +1965,7 @@ namespace Simulation
                     file.WriteLine();
                     file.WriteLine("SunAngle: " + WeatherFunctions.GetSunlightAngle(PD.index, cell) + STS + "SWT: " + SWT);
                     file.WriteLine();
-                    file.WriteLine("Layer " + "   Altitude " + "  Pressure" + " Temperature" + "  ScaleHeight" + "   RH i %  " + "    LF %   ");
+                    file.WriteLine("Layer " + "   Altitude " + "  Pressure" + " Temperature" + "  ScaleHeight" + "   RH_i_%  " + "    LF_%   ");
                     file.WriteLine("Strat  " + "{0,10:N3} {1,10:N2} {2,10:N4} {3,12:N3} {4,10:N6} {5,10:N6}", DeltaAltitude * layerCount, 
                         PD.LiveStratoMap[0][cell].pressure, PD.LiveStratoMap[0][cell].temperature, WeatherFunctions.SH(PD.index, layerCount * (float)DeltaAltitude, PD.LiveStratoMap[0][cell].temperature),
                         " ---------", LFStrato[0]*100);
@@ -1887,14 +1976,14 @@ namespace Simulation
                             (PD.LiveMap[i][cell].relativeHumidity * 100), (LF[i] * 100));
                     }
                     file.WriteLine();
-                    file.WriteLine("Layer " + "  waterContent " + " dropletSize " + "thickness " + "Ice ? " + "  Cl SWR  " + "  Cl SWA  " + "  Cl IRR  " + "  Cl IRA " + "  ReflFunc ");
+                    file.WriteLine("Layer " + "  waterContent " + " dropletSize " + "thickness " + "Ice_? " + "  Cl_SWR  " + "  Cl_SWA  " + "  Cl_IRR  " + "  Cl_IRA " + "  ReflFunc ");
                     for (int i = layerCount - 1; i >= 0; i--)
                     {
                         file.WriteLine("{0,-6} {1,12:E} {2,12:E} {3,7} {4,6} {5,9:N6} {6,9:N6} {7,9:N6} {8,9:N6} {9,9:N6}", i, PD.LiveMap[i][cell].cloud.getwaterContent(),
                             PD.LiveMap[i][cell].getDropletSize(), PD.LiveMap[i][cell].cloud.thickness, PD.LiveMap[i][cell].getIsIce(), Cl_SWR[i], Cl_SWA[i], Cl_IRR[i], Cl_IRA[i], ReflFunc[i]);
                     }
                     file.WriteLine();
-                    file.WriteLine("Layer " + "   D_dry  " + "   D_dew  " + "    ew_eq  " + "     ew    " + "   AHDP   " + "    AH i  " + "   D_wet " + "    Wet% " + "      N_dew ");
+                    file.WriteLine("Layer " + "   D_dry  " + "   D_dew  " + "    ew_eq  " + "     ew    " + "   AHDP   " + "    AH_i  " + "   D_wet " + "    Wet% " + "      N_dew ");
                     for (int i = layerCount - 1; i >= 0; i--)
                     {
                         file.WriteLine("{0,-6} {1,9:N6} {2,9:N6} {3,10:N4} {4,10:N4} {5,9:N6} {6,9:N6} {7,9:N6} {8,6:N2} {9,9:E}", i, D_dry[i], D_dew[i], ew_eq[i], ew[i], AHDP[i], AH[i], D_wet[i], WetPC[i], N_dew[i]);
@@ -1914,16 +2003,16 @@ namespace Simulation
                     file.WriteLine("{0,10:N0} {1,9:N4} {2,9:N4} {3,10:N4} {4,9:N4} {5,9:N4} {6,9:N4} {7,9:N4}", thermalCapSoil, SWRSoil, SWASoil, "----------", IRGSoil, IRAUSoil, IRRSoil, IRADSoil);
                     file.WriteLine();
 
-                    file.WriteLine("Layer " + "    CCN  " + "      N_cond  " + "     N_sscond   " + "   Q_cond  " + "   N_Prec% " + "  N_prec  ");
+                    file.WriteLine("Layer " + "    CCN  " + "      N_cond  " + "     N_sscond   " + "   Q_cond  " + "   N_Prec% " + "  N_prec  " + "      Q_prec ");
                     file.WriteLine("Strat ");
                     for (int i = layerCount - 1; i >= 0; i--)
                     {
-                        file.WriteLine("{0,-6} {1,9:N7} {2,5:E} {3,5:E} {4,5:E} {5,6:N2} {6,5:E}", i, CCN[i], N_cond[i], N_sscond[i], Q_cond[i], N_Prec_p[i], N_Prec[i]);
+                        file.WriteLine("{0,-6} {1,9:N7} {2,5:E} {3,5:E} {4,5:E} {5,6:N2} {6,5:E} {7,6:E}", i, CCN[i], N_cond[i], N_sscond[i], Q_cond[i], N_Prec_p[i], N_Prec[i], Q_Prec[i]);
                     }
                     file.WriteLine("Soil  ");
                     file.WriteLine();
 
-                    file.WriteLine("Layer " + "   ∇P (all neighbors)" + "  ⇩ neighbor index ⇩  " + "                           tensStr (x,y,z)     " + "             rotrStr (x,y,z)     ");
+                    file.WriteLine("Layer " + "   ∇P (all neighbors)" + "  ⇩ neighbor index ⇩  " + "                           tensStr.(x,y,z)     " + "             rotrStr.(x,y,z)     ");
                     file.Write("         ");
                     foreach (Cell neighbor in cell.GetNeighbors(PD.gridLevel))
                     {
@@ -1950,7 +2039,7 @@ namespace Simulation
                     }
                     file.WriteLine();
 
-                    file.WriteLine("Layer " + "   Divg " + "  WsDiv  " + "       Ws_N " + "      Ws_E " + "    Total_N " + "   Total_E " + "   buoyancy " + "    DP_V   " + "         WindVector (x,y,z)     " + "  WindSpeed " + " V_disp%");
+                    file.WriteLine("Layer " + "   Divg " + "  WsDiv  " + "       Ws_N " + "      Ws_E " + "    Total_N " + "   Total_E " + "   buoyancy " + "    DP_V   " + "         WindVector.(x,y,z)     " + "  WindSpeed " + " V_disp%");
                     file.WriteLine("Strat ");
                     for (int i = layerCount - 1; i >= 0; i--)
                     {
@@ -1974,7 +2063,7 @@ namespace Simulation
                     file.WriteLine("Soil  ");
                     file.WriteLine();
 
-                    file.WriteLine("Layer " + "        Q    " + "     T_adv_S  " + "     T_disp  " + "   Temperature " + "  SH  " + " FlowPChange" + " DynPressure " + " Pressure " + "  N_dew  " + "    RH f %");
+                    file.WriteLine("Layer " + "        Q    " + "     T_adv_S  " + "     T_disp  " + "   Temperature " + "  SH  " + " FlowPChange" + " DynPressure " + " Pressure " + "  N_dew  " + "    RH_f_%");
                     file.WriteLine("Strat  " + "{0,6:E} {1,6:E} {2,6:E} {3,9:N4} {4,9:N3} {5,10} {6,10} {7,10:N2}", 
                         QStrato[0], "-------------", "-------------",PD.BufferStratoMap[0][cell].temperature, "---------", "---------",
                         "---------", PD.BufferStratoMap[0][cell].pressure);
@@ -1986,7 +2075,7 @@ namespace Simulation
                     file.WriteLine("Soil   " + "{0,6:E} {1,6:E} {2,6:E} {3,9:N4}", QSoil, "-------------", "-------------", PD.BufferSoilMap[cell].temperature);
                     file.WriteLine();
 
-                    file.WriteLine("Layer " + "      Dl_S    " + "     Dl_v     " + "  waterContent " + " dropletSize " + "thickness " + "Ice ? " + "  condensed   " + "  deposited   " + "  RainDur " + "  RainDcy " + " dropletsCCN");
+                    file.WriteLine("Layer " + "      Dl_S    " + "     Dl_v     " + "  waterContent " + " dropletSize " + "thickness " + "Ice_? " + "  condensed   " + "  deposited   " + "  RainDur " + "  RainDcy " + " dropletsCCN");
                     for (int i = layerCount - 1; i >= 0; i--)
                     {
                         wCell = PD.BufferMap[i][cell];
