@@ -183,9 +183,7 @@ namespace Simulation
                     direction[neighborIndex] = WeatherFunctions.GetDirectionBetweenCells(PD.LiveSoilMap[cell].centroid, PD.LiveSoilMap[neighbor].centroid);
                     neighborIndex++;
                 }
-
             }
-            
             // Logger("Var init complete");
             #region CloudsIR+SW
             //-------------------------CLOUDS IR AND SW------------------------\\
@@ -665,7 +663,7 @@ namespace Simulation
                  * Each layer N_dew[i] = N_dew[i] - NetFlux[i,j]* DeltaTime / DeltaAltitude;
                 */
                 double FreeMeanPath = 2.0 * PhysicsGlobals.BoltzmannConstant / (3.0 * D_wet[AltLayer] * UGC * 6.93963681724221E-022);
-                double MeanVelocity = Math.Sqrt(PD.LiveMap[AltLayer][cell].temperature / Math.PI / PD.dewData.M / UGC); //TODO: review equation, works but may not be correct
+                double MeanVelocity = Math.Sqrt(PD.LiveMap[AltLayer][cell].temperature / Math.PI / PD.dewData.M / UGC); //TODO: review MeanVelocity equation, works but may not be correct
                 Flux[AltLayer] = -FreeMeanPath * MeanVelocity * AH[AltLayer] / DeltaAltitude;
             }
             for (int AltLayer = 0; AltLayer < layerCount; AltLayer++)

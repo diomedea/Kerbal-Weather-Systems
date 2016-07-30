@@ -202,8 +202,7 @@ namespace Simulation
                 }
                 file.WriteLine(); // closing section
 
-                /*
-                //TODO: delete section after testing
+                /* Section to print cell positional data
                 file.WriteLine("cell "+ " .Lat.. .Long.." + " L" + " neigh .Lat.. .Long.. Dist. Dir(°) " + " neigh .Lat.. .Long.. Dist. Dir(°) " 
                                                                  + " neigh .Lat.. .Long.. Dist. Dir(°) " + " neigh .Lat.. .Long.. Dist. Dir(°) " 
                                                                  + " neigh .Lat.. .Long.. Dist. Dir(°) " + " neigh .Lat.. .Long.. Dist. Dir(°) ");
