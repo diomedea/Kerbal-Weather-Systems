@@ -1098,7 +1098,7 @@ namespace Simulation
                 tensStr[layer].y = Math.Abs(wCell.windVector.y) / DeltaAltitude * wsVdiff; //wind * tensor gradient
                 double TCtens = (wsVdiff == 0) ? 0 : (1.0 - Math.Exp(-Math.Abs(DeltaTime * tensStr[layer].y / wCell.windVector.y)));
                 float wsV = (float)(wCell.windVector.y * WeatherSettings.SD.windKept + (buoyancy[layer] + DP_V[layer] - (wCell.windVector.y * Mu / D_wet[layer])) 
-                    * DeltaTime / 2 - wsVdiff / 2 * TCtens + (float)rotrStr[layer].y + Ws_V_ana[layer]);
+                    * DeltaTime / 2 - wsVdiff / 4 * TCtens + (float)rotrStr[layer].y + Ws_V_ana[layer]);
 
                 WeatherCell wCellBuffer = PD.BufferMap[layer][cell];
                 wCellBuffer.windVector = new Vector3(Total_N[layer], wsV, Total_E[layer]);
