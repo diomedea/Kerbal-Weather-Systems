@@ -1251,6 +1251,7 @@ namespace Simulation
                     // Vector3 cellVector = cell.Position - neighbor.Position;
                     Vector3 cellVector = PD.LiveSoilMap[cell].centroid - PD.LiveSoilMap[neighbor].centroid;
                     float Ws_wC = -Vector3.Dot(neighborWCell.windVector, cellVector); //the amount fo wind coming to us
+                    float TC_Ws_wC = (float)(Math.Sign(Ws_wC) * (1 - Math.Exp(-Math.Abs(Ws_wC * DeltaTime / DeltaDistance))));
 
                     //calc D_wet_Diff
                     float Neighborew_eq = WeatherFunctions.getEwEq(PD.index, neighborWCell.temperature);
@@ -1264,8 +1265,8 @@ namespace Simulation
 
                     if (Ws_wC > 0 && Mathf.Abs(D_wet_Diff) > D_DIFF)  // D_wet_Diff > D_DIFF means different enough airmasses to make a front
                     {
-                        H_adv = Ws_wC * (neighborWCell.N_Dew - N_dew[layer]) * 0.8f; //0.8 because cold front moves faster
-                        T_adv = Ws_wC * (neighborWCell.temperature - wCell.temperature) * 0.8f;
+                        H_adv = TC_Ws_wC * (neighborWCell.N_Dew - N_dew[layer]) * 0.8f; //0.8 because cold front moves faster
+                        T_adv = TC_Ws_wC * (neighborWCell.temperature - wCell.temperature) * 0.8f;
                         if (D_wet_Diff < 0) //warm front, takes the 0.8 and halves it essentially
                         {
                             H_adv /= 2;
