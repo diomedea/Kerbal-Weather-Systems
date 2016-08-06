@@ -35,6 +35,10 @@ namespace Database
             file.WriteLine(line);
             line = "AtmoIRGFactor = " + SD.AtmoIRGFactor;
             file.WriteLine(line);
+            line = "windKept = " + SD.windKept;
+            file.WriteLine(line);
+            line = "flowPChangeKept = " + SD.flowPChangeKept;
+            file.WriteLine(line);
             Logger("Settings saved");
         }
 
@@ -106,6 +110,18 @@ namespace Database
                     SD.AtmoIRGFactor = float.Parse(line);
                     continue;
                 }
+                if (line.StartsWith("windKept"))
+                {
+                    line = line.Substring(line.IndexOf("=") + 2);
+                    SD.windKept = float.Parse(line);
+                    continue;
+                }
+                if (line.StartsWith("flowPChangeKept"))
+                {
+                    line = line.Substring(line.IndexOf("=") + 2);
+                    SD.flowPChangeKept = float.Parse(line);
+                    continue;
+                }
             }
             Logger("Settings loaded");
         }
@@ -133,6 +149,10 @@ namespace Database
             line = "SoilIRGFactor = 1";
             file.WriteLine(line);
             line = "AtmoIRGFactor = 1";
+            file.WriteLine(line);
+            line = "windKept = 1";
+            file.WriteLine(line);
+            line = "flowPChangeKept = 0";
             file.WriteLine(line);
             file.Close();
             return "Settings initialized";

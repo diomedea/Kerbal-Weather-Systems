@@ -79,6 +79,11 @@ namespace Overlay
             pressResc.MinQuantity = 100000;
             pressResc.MaxQuantity = 101500;
             resources.Add(pressResc);
+            var pDiffResc = new ResourceDefinition();
+            pDiffResc.Resource = "Pressure Delta";
+            pDiffResc.MinQuantity = -1000;
+            pDiffResc.MaxQuantity = 1000;
+            resources.Add(pDiffResc);
             var WsHResc = new ResourceDefinition();
             WsHResc.Resource = "Wind H Speed";
             WsHResc.MinQuantity = 0;
@@ -348,6 +353,9 @@ namespace Overlay
                 case "Pressure":
                     deposit = PD.LiveMap[layer][cell].pressure;
                     break;
+                case "Pressure Delta":
+                    deposit = ((PD.LiveMap[0][cell].pressure - FlightGlobals.getStaticPressure(0, PD.body) * 1000) * PD.LiveMap[layer][cell].pressure / PD.LiveMap[0][cell].pressure + PD.LiveMap[layer][cell].flowPChange);
+                    break;
                 case "Wind H Speed":
                     deposit = WeatherFunctions.GetCellwindH(PD.index, layer, cell);
                     break;
@@ -428,7 +436,21 @@ namespace Overlay
                     color = new Color32(r, g, b, alpha);
                     return color;
                 }
-                if (definition.Resource.Equals("Wind H Speed"))  // shows horizontal windspeed
+                if (definition.Resource.Equals("Pressure Delta"))
+                {
+                    ratio = (float)Math.Min(((thing1 - definition.MinQuantity)) / ((definition.MaxQuantity - definition.MinQuantity)), 1);
+                    val = (int)(ratio * (255 * 4));
+                    //black -> red -> purple -> blue -> yellow -> white
+                    int sec1 = 1020 / 4; //red will be 100% at this value, the first section from black -> red
+                    byte r = (byte)Mathf.Clamp(val < sec1 ? 255 * ((float)val / sec1) : val < sec1 * 2 ? 255 * (1 - ((float)(val - sec1)) / sec1) : val < sec1 * 3 ? 255 * ((float)(val - sec1 * 2) / sec1) : 255, 0, 255);
+                    byte g = (byte)Mathf.Clamp(val < sec1 * 2 ? 0 : val < sec1 * 3 ? 255 * (((float)(val - sec1 * 2)) / sec1) : 255, 0, 255);
+                    byte b = (byte)Mathf.Clamp(val < sec1 ? 0 : val < sec1 * 2 ? 255 * (((float)(val - sec1)) / sec1) : val < sec1 * 3 ? 255 * (1 - (((float)(val - sec1 * 2)) / sec1)) : 255 * ((float)(val - sec1 * 3) / sec1), 0, 255);
+
+
+                    color = new Color32(r, g, b, alpha);
+                    return color;
+                }
+                    if (definition.Resource.Equals("Wind H Speed"))  // shows horizontal windspeed
                 {
                     int sec1 = 1020 / 10;
 
@@ -583,6 +605,7 @@ namespace Overlay
             GUILayout.Label(String.Format("ΔDistanceδ:  {0:0.000000}", Math.Sqrt(Math.Abs(DDD2 - DDD * DDD)) / DDD));
             GUILayout.Label(String.Format("CentroidΔ: {0:0.000000}", (cell.Position - PD.LiveSoilMap[cell].centroid).magnitude));
             GUILayout.Label(String.Format("flowPChange: {0:+00.000;-00.000}", PD.LiveMap[currentLayer][cell].flowPChange));
+            GUILayout.Label(String.Format("Pressure Δ: {0:+000.00;-000.00}", ((PD.LiveMap[0][cell].pressure - FlightGlobals.getStaticPressure(0, PD.body) * 1000) * PD.LiveMap[currentLayer][cell].pressure / PD.LiveMap[0][cell].pressure + PD.LiveMap[currentLayer][cell].flowPChange)));
             GUILayout.EndVertical();
 
         }

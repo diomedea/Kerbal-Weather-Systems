@@ -18,5 +18,8 @@ namespace Database
         public float AtmoThCapMult;
         public float SoilIRGFactor;
         public float AtmoIRGFactor;  //TODO: drop (obsolete)
+        // Wind dynamic tuning
+        public float windKept;
+        public float flowPChangeKept; 
     }
 }
