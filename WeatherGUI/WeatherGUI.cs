@@ -106,7 +106,7 @@ namespace WeatherGUI
             GUILayout.Label("Layer:");
             if (GUILayout.Button("-")) { currentLayer = currentLayer > 0 ? currentLayer - 1 : 0; MapOverlay.currentLayer = currentLayer; }
             GUILayout.Label("" + currentLayer);
-            if (GUILayout.Button("+")) { currentLayer = currentLayer == PD.LiveMap.Count - 1 ? PD.LiveMap.Count - 1 : currentLayer + 1; MapOverlay.currentLayer = currentLayer; }
+            if (GUILayout.Button("+")) { currentLayer = currentLayer == PD.LiveMap.Count + PD.LiveStratoMap.Count - 1 ? PD.LiveMap.Count + PD.LiveStratoMap.Count - 1 : currentLayer + 1; MapOverlay.currentLayer = currentLayer; }
             GUILayout.EndHorizontal();
             if (GUILayout.Button("Apply")) { MapOverlay.refreshCellColours(); }
             int height = MapOverlay.getOverlayTextureScale(MapOverlay.resource.Resource).height;

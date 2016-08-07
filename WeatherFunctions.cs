@@ -119,19 +119,47 @@ namespace KerbalWeatherSystems
         }
         public static float GetCellTemperature(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].temperature;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].temperature;
+            }
+            else
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveStratoMap[layer - WeatherDatabase.PlanetaryData[database].LiveMap.Count][cell].temperature;
+            }
         }
         public static float GetCellPressure(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].pressure;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].pressure;
+            }
+            else
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveStratoMap[layer - WeatherDatabase.PlanetaryData[database].LiveMap.Count][cell].pressure;
+            }
         }
         public static float GetCellRH(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].relativeHumidity;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].relativeHumidity;
+            }
+            else
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveStratoMap[layer - WeatherDatabase.PlanetaryData[database].LiveMap.Count][cell].relativeHumidity;
+            }
         }
         public static float GetCellCCN(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].CCN;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].CCN;
+            }
+            else
+            {
+                return 0;
+            }
         }
         public static float GetCelldDew(int database, int layer, Cell cell)
         {
@@ -143,38 +171,97 @@ namespace KerbalWeatherSystems
         }
         public static float GetCellthickness(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.thickness;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.thickness;
+            }
+            else
+            {
+                return 0;
+            }
         }
         public static float GetCelldropletSize(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.dropletSize;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.dropletSize;
+            }
+            else
+            {
+                return 0;
+            }
         }
         public static float GetCellrainDuration(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.rainyDuration;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.rainyDuration;
+            }
+            else
+            {
+                return 0;
+            }
         }
         public static float GetCellrainDecay(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.rainyDecay;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.rainyDecay;
+            }
+            else
+            {
+                return 0;
+            }
         }
         public static float GetCellwindV(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].windVector.y;
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].windVector.y;
+            }
+            else
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveStratoMap[layer - WeatherDatabase.PlanetaryData[database].LiveMap.Count][cell].windVector.y;
+            }
         }
         public static float GetCellwindH(int database, int layer, Cell cell)
         {
-            Vector3 wind = WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].windVector;
+            Vector3 wind = new Vector3();
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                wind = WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].windVector;
+            }
+            else
+            {
+                wind = WeatherDatabase.PlanetaryData[database].LiveStratoMap[layer - WeatherDatabase.PlanetaryData[database].LiveMap.Count][cell].windVector;
+            }
+                
             return (float)(Math.Sqrt(wind.x * wind.x + wind.z * wind.z));
         }
         public static double GetCellwindDir(int database, int layer, Cell cell) 
             // Note: returns direction wind is blowing towards (North = 0, CW); however convention holds to show direction wind is blowing from (180°-windDir)
         {
-            Vector3 wind = WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].windVector;
+            Vector3 wind = new Vector3();
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                wind = WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].windVector;
+            }
+            else
+            {
+                wind = WeatherDatabase.PlanetaryData[database].LiveStratoMap[layer - WeatherDatabase.PlanetaryData[database].LiveMap.Count][cell].windVector;
+            }
             return (Mathf.Rad2Deg * Math.Atan2(wind.z, wind.x) + (wind.z < 0 ? 360.0 : 0.0));
         }
         public static float GetCellWaterContent(int database, int layer, Cell cell)
         {
-            return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.getwaterContent();
+            if (layer < WeatherDatabase.PlanetaryData[database].LiveMap.Count)
+            {
+                return WeatherDatabase.PlanetaryData[database].LiveMap[layer][cell].cloud.getwaterContent();
+            }
+            else
+            {
+                return 0;
+            }
         }
         public static UInt16 GetCellCloudThickness(int database, int layer, Cell cell)
         {
@@ -345,8 +432,8 @@ namespace KerbalWeatherSystems
             }
             else  // stratosphere
             {
-                Debug.Log("D_Wet requested for altitude beyond tropopause");
-                return 0;
+                // TODO: compute Pint, Tint with altitudeRem and apply in following equation
+                return (PD.LiveStratoMap[layer - PD.LiveMap.Count][cell].pressure * PD.atmoData.M / (CellUpdater.UGC * PD.LiveStratoMap[layer - PD.LiveMap.Count][cell].temperature));
             }
         }  
         internal static float getEwEq(int database, float temperature)  // Antoine equation for water vapor pressure

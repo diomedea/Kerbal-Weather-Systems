@@ -342,8 +342,44 @@ namespace Overlay
         */
         internal static void refreshCellColours()
         {
-            var colors = new CellMap<Color32>(PD.gridLevel, c => getCellColor(currentLayer, c));
-            or.SetCellColors(colors);
+            if (currentLayer < PD.LiveMap.Count)
+            {
+                var colors = new CellMap<Color32>(PD.gridLevel, c => getCellColor(currentLayer, c));
+                or.SetCellColors(colors);
+            }
+            else
+            {
+                var colors = new CellMap<Color32>(PD.gridLevel, c => getStratoCellColor(currentLayer - PD.LiveMap.Count, c));
+                or.SetCellColors(colors);
+            }
+            
+        }
+        private static Color32 getStratoCellColor(int layer, Cell cell)
+        {
+            double? deposit = 0;
+            double deposit2 = 0;
+            switch (resource.Resource)
+            {
+                case "Temperature":
+                    deposit = PD.LiveStratoMap[layer][cell].temperature;
+                    break;
+                case "Delta Temp":
+                    deposit = (WeatherSimulator.GetInitTemperature(PD, currentLayer, cell) - WeatherFunctions.GetCellTemperature(PD.index, currentLayer, cell));
+                    break;
+                case "Temp. Change":
+                    deposit = PD.LiveStratoMap[layer][cell].TempChange;
+                    break;
+                case "Pressure":
+                    deposit = PD.LiveStratoMap[layer][cell].pressure;
+                    break;
+                case "Pressure Delta":
+                    deposit = ((PD.LiveMap[0][cell].pressure - FlightGlobals.getStaticPressure(0, PD.body) * 1000) * PD.LiveStratoMap[layer][cell].pressure / PD.LiveMap[0][cell].pressure + PD.LiveStratoMap[layer][cell].flowPChange);
+                    break;
+                
+            }
+            var scanned = true;
+            var color = (revealAll ? deposit != null : scanned) ? getDepositColor(resource, deposit, deposit2) : colorUnknown;
+            return color;
         }
         private static Color32 getCellColor(int layer, Cell cell)
         {
@@ -616,7 +652,7 @@ namespace Overlay
             GUILayout.Label("Lon: " + lon + " °");
             GUILayout.Label(String.Format("Geodesic: {0:G}", Math.Sqrt(cell.Position.x * cell.Position.x + cell.Position.y * cell.Position.y + cell.Position.z * cell.Position.z)));
             GUILayout.Label(String.Format("ΔT(KSP-KWS): {0:+0.000;-0.000}°", (WeatherSimulator.GetInitTemperature(PD, currentLayer, cell) - WeatherFunctions.GetCellTemperature(PD.index, currentLayer, cell))));
-            GUILayout.Label(String.Format("δ Temp: {0:+0.000000;-0.000000}°/s", PD.LiveMap[currentLayer][cell].TempChange));
+            GUILayout.Label(String.Format("δ Temp: {0:+0.000000;-0.000000}°/s", currentLayer < PD.LiveMap.Count ? PD.LiveMap[currentLayer][cell].TempChange : PD.LiveStratoMap[currentLayer - PD.LiveMap.Count][cell].TempChange));
             double DDD = 0.0;
             double DDD2 = 0.0;
             int n = 0;
@@ -631,8 +667,10 @@ namespace Overlay
             DDD2 /= n;
             GUILayout.Label(String.Format("ΔDistanceδ:  {0:0.000000}", Math.Sqrt(Math.Abs(DDD2 - DDD * DDD)) / DDD));
             GUILayout.Label(String.Format("CentroidΔ: {0:0.000000}", (cell.Position - PD.LiveSoilMap[cell].centroid).magnitude));
-            GUILayout.Label(String.Format("flowPChange: {0:+00.000;-00.000}", PD.LiveMap[currentLayer][cell].flowPChange));
-            GUILayout.Label(String.Format("Pressure Δ: {0:+000.00;-000.00}", ((PD.LiveMap[0][cell].pressure - FlightGlobals.getStaticPressure(0, PD.body) * 1000) * PD.LiveMap[currentLayer][cell].pressure / PD.LiveMap[0][cell].pressure + PD.LiveMap[currentLayer][cell].flowPChange)));
+            GUILayout.Label(String.Format("flowPChange: {0:+00.000;-00.000}", currentLayer < PD.LiveMap.Count ? PD.LiveMap[currentLayer][cell].flowPChange : PD.LiveStratoMap[currentLayer - PD.LiveMap.Count][cell].flowPChange));
+            GUILayout.Label(String.Format("Pressure Δ: {0:+000.00;-000.00}", currentLayer < PD.LiveMap.Count ? 
+                ((PD.LiveMap[0][cell].pressure - FlightGlobals.getStaticPressure(0, PD.body) * 1000) * PD.LiveMap[currentLayer][cell].pressure / PD.LiveMap[0][cell].pressure + PD.LiveMap[currentLayer][cell].flowPChange) : 
+                ((PD.LiveMap[0][cell].pressure - FlightGlobals.getStaticPressure(0, PD.body) * 1000) * PD.LiveStratoMap[currentLayer - PD.LiveMap.Count][cell].pressure / PD.LiveMap[0][cell].pressure + PD.LiveStratoMap[currentLayer - PD.LiveMap.Count][cell].flowPChange)));
             GUILayout.EndVertical();
 
         }
