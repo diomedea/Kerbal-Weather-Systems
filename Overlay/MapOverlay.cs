@@ -433,9 +433,17 @@ namespace Overlay
                 {
                     ratio = (float)Math.Min(((thing1 - definition.MinQuantity)) / ((definition.MaxQuantity - definition.MinQuantity)), 1);
                     val = (int)(ratio * (255 * 4));
-                    //blue -> yellow
+                    //black; blue -> yellow; white
                     byte b = (byte)Mathf.Clamp((255 - (float)val / 4), 0, 255);
                     byte r = (byte)Mathf.Clamp((float)val / 4, 0, 255);
+                    if (val > 1019)
+                    {
+                        b = 255; r = 255;
+                    }
+                    if (val < 1)
+                    {
+                        b = 0; r = 0;
+                    }
                     byte g = r;
                     color = new Color32(r, g, b, alpha);
                     return color;
@@ -608,7 +616,7 @@ namespace Overlay
             GUILayout.Label("Lon: " + lon + " °");
             GUILayout.Label(String.Format("Geodesic: {0:G}", Math.Sqrt(cell.Position.x * cell.Position.x + cell.Position.y * cell.Position.y + cell.Position.z * cell.Position.z)));
             GUILayout.Label(String.Format("ΔT(KSP-KWS): {0:+0.000;-0.000}°", (WeatherSimulator.GetInitTemperature(PD, currentLayer, cell) - WeatherFunctions.GetCellTemperature(PD.index, currentLayer, cell))));
-            GUILayout.Label(String.Format("δ Temp: {0:+0.000000;-0.000000}°", PD.LiveMap[currentLayer][cell].TempChange));
+            GUILayout.Label(String.Format("δ Temp: {0:+0.000000;-0.000000}°/s", PD.LiveMap[currentLayer][cell].TempChange));
             double DDD = 0.0;
             double DDD2 = 0.0;
             int n = 0;

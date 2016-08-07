@@ -328,6 +328,7 @@ namespace Simulation
                 {
                     // Foggy!
                     N_cond[i] = (RH_Live - 0.999f) * PD.dewData.M / UGC / wCellLive.temperature;
+                    Q_cond_Soil = N_cond[0] * PD.dewData.he;
                     RH_Live = 0.999f;
                 }
 
@@ -643,7 +644,7 @@ namespace Simulation
                     Logger("EvapCorr is NaN" + " @ cell: " + cell.Index);
                 }
             }
-            double Q_evap = evap_corr * PD.dewData.he; //heat required for evap
+            double Q_evap = evap_corr * PD.dewData.he * DeltaTime; //heat required for evap
 
             #region N_dew, N_cond, N_sscond
             //Get Ws_evap, N_dew, N_sscond, N_Prec_p, N_Prec
@@ -870,12 +871,12 @@ namespace Simulation
             //float tempTemperature = Mathf.Max(0, Q / thermalCap[AltLayer]);
             {//soil temperature
                 SoilCell wCellLive = PD.LiveSoilMap[cell];
-                QSoil = (float)(thermalCapSoil * wCellLive.temperature + (SWASoil + IRAUSoil - IRGSoil + IRADSoil - Q_evap + Q_cond_Soil) * DeltaTime);
+                QSoil = (float)(thermalCapSoil * wCellLive.temperature - Q_evap + Q_cond_Soil + (SWASoil + IRAUSoil - IRGSoil + IRADSoil) * DeltaTime);
             }
             for (int AltLayer = 0; AltLayer < layerCount; AltLayer++)
             {
                 WeatherCell wCellLive = PD.LiveMap[AltLayer][cell];
-                Q[AltLayer] = thermalCap[AltLayer] * wCellLive.temperature + (SWA[AltLayer] + IRAU[AltLayer] - IRG[AltLayer] + IRAD[AltLayer] + Q_cond[AltLayer])
+                Q[AltLayer] = thermalCap[AltLayer] * wCellLive.temperature + Q_cond[AltLayer] + (SWA[AltLayer] + IRAU[AltLayer] - IRG[AltLayer] + IRAD[AltLayer])
                     * (float)DeltaTime;
             }
             for (int AltLayer = 0; AltLayer < stratoCount; AltLayer++)
@@ -1602,7 +1603,7 @@ namespace Simulation
             for (int AltLayer = 0; AltLayer < layerCount; AltLayer++)
             {
                 WeatherCell wCell = PD.LiveMap[AltLayer][cell];
-                Q[AltLayer] = thermalCap[AltLayer] * wCell.temperature + (SWA[AltLayer] + IRAU[AltLayer] - IRG[AltLayer] + IRAD[AltLayer] + Q_cond[AltLayer])
+                Q[AltLayer] = thermalCap[AltLayer] * wCell.temperature + Q_cond[AltLayer] + (SWA[AltLayer] + IRAU[AltLayer] - IRG[AltLayer] + IRAD[AltLayer])
                     * (float)(DeltaTime);
             }
 
