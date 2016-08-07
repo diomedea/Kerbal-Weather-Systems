@@ -24,6 +24,7 @@ namespace Database
         [ProtoMember(7)]
         public ProtoVector3 windVector { get; internal set; } //12B IS LOCAL TO THE CELL, NOT WORLD COORDS
         public float flowPChange { get; internal set; }
+        public float TempChange { get; internal set; }
         
         public float getDropletSize()
         {

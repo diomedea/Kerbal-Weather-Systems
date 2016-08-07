@@ -324,7 +324,8 @@ namespace Simulation
 
                     wCell.CCN = 0;
                     wCell.temperature = GetInitTemperature(PD, layer+layers, cell);
-                    if(layer == 0)
+                    wCell.TempChange = 0;
+                    if (layer == 0)
                     {
                         wCell.pressure = (float)(PD.LiveMap[layers - 1][cell].pressure 
                             * Math.Exp(-WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell) / (CellUpdater.UGC * PD.SH_correction / PD.atmoData.M / CellUpdater.G(PD.index, (layers+layer) * WeatherFunctions.GetDeltaLayerAltitude(PD.index, cell)) * PD.LiveMap[layers - 1][cell].temperature)));
@@ -361,6 +362,7 @@ namespace Simulation
                     WeatherCell wCell = new WeatherCell();
                     
                     wCell.temperature = GetInitTemperature(PD, AltLayer, cell);
+                    wCell.TempChange = 0;
 
                     if (AltLayer == 0)
                     {

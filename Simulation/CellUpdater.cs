@@ -944,6 +944,7 @@ namespace Simulation
                     KWSerror = true;
                     Logger("It's mighty chilling out here Frank" + " @ cell: " + cell.Index);
                 }
+                wCell.TempChange = (float)((wCell.temperature - PD.LiveStratoMap[AltLayer][cell].temperature) / DeltaTime);
                 PD.BufferStratoMap[AltLayer][cell] = wCell;
             }
             #endregion
@@ -1147,9 +1148,8 @@ namespace Simulation
                     KWSerror = true;
                     Logger("wsV went wrong" + " @ cell: " + cell.Index);
                 }
-                double TimeChargeV = Math.Sign(wsV)*(1.0 - Math.Exp(-Math.Pow(Math.Abs(DeltaTime * wsV / DeltaAltitude), 6.0/6)));  // TODO: find correct factors. Needed to stabilize V_disp from variance in DeltaTime
-                double TimeChargeH = Math.Sign(wsDiv[layer])*(1.0 - Math.Exp((float)-Math.Pow(Math.Abs(DeltaTime * wsDiv[layer] / DeltaDistance_Avg[layer]), 6.0/6)));  // needed to stabilize H_disp from variance in DeltaTime
-                // Note: the TimeChargeV, TimeChargeH exponents are raised to Pow 5/6 to have the produced curve fit the effects when timewarping
+                double TimeChargeV = Math.Sign(wsV) * (1.0 - Math.Exp(-Math.Abs(DeltaTime * wsV / DeltaAltitude)));  // needed to stabilize V_disp from variance in DeltaTime
+                double TimeChargeH = Math.Sign(wsDiv[layer])*(1.0 - Math.Exp((float)-Math.Abs(DeltaTime * wsDiv[layer] / DeltaDistance_Avg[layer])));  // needed to stabilize H_disp from variance in DeltaTime
                 dynPressure[layer] = (float)(0.5f * D_wet[layer] * -wsDiv[layer] * Math.Abs(wsDiv[layer])); // horizontal dynamicPressure
                 staticPressureChange = (float)(-TimeChargeH * 4.0) ;  // static pressure change (%) due to horizontal flow
                 
@@ -1621,7 +1621,7 @@ namespace Simulation
                     KWSerror = true;
                     Logger("It's mighty chilling out here Frank" + " @ cell: " + cell.Index);
                 }
-
+                wCell.TempChange = (float)((wCell.temperature - PD.LiveMap[AltLayer][cell].temperature) / DeltaTime);
                 PD.BufferMap[AltLayer][cell] = wCell;
                 /*
                 if (cell.Index == 6664 && AltLayer == 0)
@@ -1646,10 +1646,6 @@ namespace Simulation
                 WeatherCell wCellLive = PD.LiveMap[layer][cell];
                 CloudData cloud = wCell.cloud;
                 CloudData cloudLive = wCellLive.cloud;
-                if ((cloudLive.getwaterContent() > 1E-4f) && (cloud.getwaterContent() < 1E-5f))//TODO: delete after fixing precipitations
-                {
-                    KWSerror = false;
-                }
 
                 double newDew = K_N_DROP * (N_cond[layer] + N_sscond[layer]) * WeatherFunctions.SphereSize2Volume(0.000001f);  // newDew = amount of Dew coalescing in new droplets
                 if (newDew < N_cond[layer])   // drop the newDew used for coalescence of new droplets
@@ -1894,6 +1890,7 @@ namespace Simulation
                     }
                     // humidity effects
                     wCell.relativeHumidity = wCell.N_Dew * wCell.temperature * UGC / PD.dewData.M / ew_eq[layer];
+                    wCell.TempChange = (float)((wCell.temperature - PD.LiveMap[layer][cell].temperature) / DeltaTime);
                     PD.BufferMap[layer][cell] = wCell;  // and store updated values
                 }
             }

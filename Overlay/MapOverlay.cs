@@ -71,8 +71,17 @@ namespace Overlay
             tempResc.MinQuantity = 200;
             tempResc.MaxQuantity = 330;
             resources.Add(tempResc);
-            
-            
+            var DTempResc = new ResourceDefinition();
+            DTempResc.Resource = "Delta Temp";
+            DTempResc.MinQuantity = -3;
+            DTempResc.MaxQuantity = 3;
+            resources.Add(DTempResc);
+            var tempChResc = new ResourceDefinition();
+            tempChResc.Resource = "Temp. Change";
+            tempChResc.MinQuantity = -0.003;
+            tempChResc.MaxQuantity = 0.003;
+            resources.Add(tempChResc);
+
 
             var pressResc = new ResourceDefinition();
             pressResc.Resource = "Pressure";
@@ -121,11 +130,6 @@ namespace Overlay
             DDDResc.MinQuantity = 0;
             DDDResc.MaxQuantity = 0.1;
             resources.Add(DDDResc);
-            var DTempResc = new ResourceDefinition();
-            DTempResc.Resource = "Delta Temp";
-            DTempResc.MinQuantity = -3;
-            DTempResc.MaxQuantity = 3;
-            resources.Add(DTempResc);
             #endregion
 
             SetActiveResource(0);
@@ -350,6 +354,12 @@ namespace Overlay
                 case "Temperature":
                     deposit = PD.LiveMap[layer][cell].temperature;
                     break;
+                case "Delta Temp":
+                    deposit = (WeatherSimulator.GetInitTemperature(PD, currentLayer, cell) - WeatherFunctions.GetCellTemperature(PD.index, currentLayer, cell));
+                    break;
+                case "Temp. Change":
+                    deposit = PD.LiveMap[layer][cell].TempChange;
+                    break;
                 case "Pressure":
                     deposit = PD.LiveMap[layer][cell].pressure;
                     break;
@@ -393,9 +403,6 @@ namespace Overlay
                     DDD2 /= n;
                     deposit = Math.Sqrt(Math.Abs(DDD2-DDD*DDD))/DDD;
                     break;
-                case "Delta Temp":
-                    deposit = (WeatherSimulator.GetInitTemperature(PD, currentLayer, cell) - WeatherFunctions.GetCellTemperature(PD.index, currentLayer, cell));
-                    break;
             }
             
             var scanned = true;
@@ -419,6 +426,17 @@ namespace Overlay
                     byte r = (byte)Mathf.Clamp(deposit.Value > 273 ? (int)(Math.Abs(c0 - val) * 1.75) : (int)(Math.Abs(c0 - val) * 1.5), 0, 255);
                     byte g = (byte)Mathf.Clamp(deposit.Value > 273 ? val > c25 ? 255 - (val - 870) : 255 - (val - 844) : 0, 0, 255);
                     byte b = (byte)Mathf.Clamp(deposit.Value < 273 ? 255 : 0, 0, 255);
+                    color = new Color32(r, g, b, alpha);
+                    return color;
+                }
+                if (definition.Resource.Equals("Temp. Change"))
+                {
+                    ratio = (float)Math.Min(((thing1 - definition.MinQuantity)) / ((definition.MaxQuantity - definition.MinQuantity)), 1);
+                    val = (int)(ratio * (255 * 4));
+                    //blue -> yellow
+                    byte b = (byte)Mathf.Clamp((255 - (float)val / 4), 0, 255);
+                    byte r = (byte)Mathf.Clamp((float)val / 4, 0, 255);
+                    byte g = r;
                     color = new Color32(r, g, b, alpha);
                     return color;
                 }
@@ -538,7 +556,7 @@ namespace Overlay
                     color = new Color32(r, g, b, alpha);
                     return color;
                 }
-                    if (definition.Resource.Equals("Delta Temp"))
+                if (definition.Resource.Equals("Delta Temp"))
                 {
                     ratio = (float)Math.Min(((thing1 - definition.MinQuantity)) / ((definition.MaxQuantity - definition.MinQuantity)), 1);
                     val = (int)(ratio * (255 * 4));
@@ -590,6 +608,7 @@ namespace Overlay
             GUILayout.Label("Lon: " + lon + " °");
             GUILayout.Label(String.Format("Geodesic: {0:G}", Math.Sqrt(cell.Position.x * cell.Position.x + cell.Position.y * cell.Position.y + cell.Position.z * cell.Position.z)));
             GUILayout.Label(String.Format("ΔT(KSP-KWS): {0:+0.000;-0.000}°", (WeatherSimulator.GetInitTemperature(PD, currentLayer, cell) - WeatherFunctions.GetCellTemperature(PD.index, currentLayer, cell))));
+            GUILayout.Label(String.Format("δ Temp: {0:+0.000000;-0.000000}°", PD.LiveMap[currentLayer][cell].TempChange));
             double DDD = 0.0;
             double DDD2 = 0.0;
             int n = 0;
